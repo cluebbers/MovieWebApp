@@ -3,9 +3,8 @@ import os
 import requests
 from data_manager import DataManager
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for
-from models import Movie, db, User
-
+from flask import Flask, redirect, render_template, request, url_for
+from models import Movie, User, db
 
 load_dotenv()
 OMDB_KEY = os.getenv("OMDB_KEY")
@@ -18,18 +17,16 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db.init_app(
-    app
-)  # Link the database and the app. This is the reason you need to import db from models
+db.init_app(app)
 
-data_manager = DataManager()  # Create an object of your DataManager class
+data_manager = DataManager()
 
 
 @app.route("/", methods=["GET"])
 def index():
     """Show a list of all registered users and a form for adding new users."""
     users = data_manager.get_users()
-    return render_template("index.html", users=users)
+    return render_template("index.html", users=users), 200
 
 
 @app.route("/users", methods=["POST"])
@@ -39,7 +36,7 @@ def create_user():
     """
     name = request.form.get("name")
     data_manager.create_user(name)
-    return redirect(url_for("index")), 200
+    return redirect(url_for("index")), 303
 
 
 @app.route("/users/<int:user_id>/movies", methods=["GET"])
@@ -47,15 +44,19 @@ def get_movies(user_id):
     """When you click on a user name, the app retrieves that user’s list of favorite movies and displays it."""
     movies = data_manager.get_movies(user_id)
     user = User.query.get(user_id)
-    return render_template("movies.html", movies=movies, user=user)
+    return render_template("movies.html", movies=movies, user=user), 200
 
 
 @app.route("/users/<int:user_id>/movies", methods=["POST"])
 def add_movie(user_id):
     """Add a new movie to a user’s list of favorite movies."""
-    title = request.form.get("title")
+    title = request.form.get("title").strip()
+    year = request.form.get("year", "").strip()
 
     params = {"apikey": OMDB_KEY, "t": title}
+    if year:
+        params["y"] = year
+
     response = requests.get(OMDB_URL, params=params)
     movie_info = response.json()
 

@@ -12,7 +12,7 @@ class Movie(db.Model):
   id = db.Column(db.Integer, primary_key=True, auto_increment=True)
   name = db.Column(db.String(100), nullable=False)
   director = db.Column(db.String(100), nullable=False)
-  year = db.Column(db.Integer, nullable=False)
+  year = db.Column(db.String(20), nullable=False)
   poster_url = db.Column(db.String(200))
 
   # Link Movie to User
