@@ -25,8 +25,11 @@ data_manager = DataManager()
 @app.route("/", methods=["GET"])
 def index():
     """Show a list of all registered users and a form for adding new users."""
-    users = data_manager.get_users()
-    return render_template("index.html", users=users), 200
+    try:
+        users = data_manager.get_users()
+        return render_template("index.html", users=users), 200
+    except Exception:
+        return "Unexpected error while loading users.", 500
 
 
 @app.route("/users", methods=["POST"])
@@ -34,17 +37,27 @@ def create_user():
     """When the user submits the “add user” form, a POST request is made.
     The server receives the new user info, adds it to the database, then redirects back to /.
     """
-    name = request.form.get("name")
-    data_manager.create_user(name)
-    return redirect(url_for("index")), 303
+    name = request.form.get("name").strip()
+
+    try:
+        data_manager.create_user(name)
+        return redirect(url_for("index")), 303
+    except Exception:
+        return "Unexpected error while creating user.", 500
 
 
 @app.route("/users/<int:user_id>/movies", methods=["GET"])
 def get_movies(user_id):
     """When you click on a user name, the app retrieves that user’s list of favorite movies and displays it."""
-    movies = data_manager.get_movies(user_id)
-    user = User.query.get(user_id)
-    return render_template("movies.html", movies=movies, user=user), 200
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return "User not found.", 404
+
+        movies = data_manager.get_movies(user_id)
+        return render_template("movies.html", movies=movies, user=user), 200
+    except Exception:
+        return "Unexpected error while loading movies.", 500
 
 
 @app.route("/users/<int:user_id>/movies", methods=["POST"])
@@ -53,42 +66,72 @@ def add_movie(user_id):
     title = request.form.get("title").strip()
     year = request.form.get("year", "").strip()
 
-    params = {"apikey": OMDB_KEY, "t": title}
-    if year:
-        params["y"] = year
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return "User not found.", 404
 
-    response = requests.get(OMDB_URL, params=params)
-    movie_info = response.json()
+        params = {"apikey": OMDB_KEY, "t": title}
+        if year:
+            params["y"] = year
 
-    new_movie = Movie(
-        name=movie_info["Title"],
-        director=movie_info["Director"],
-        year=movie_info["Year"],
-        poster_url=movie_info["Poster"],
-        user_id=user_id,
-    )
-    data_manager.add_movie(new_movie)
-    return redirect(url_for("get_movies", user_id=user_id)), 303
+        response = requests.get(OMDB_URL, params=params)
+        movie_info = response.json()
+        if movie_info.get("Response") == "False":
+            return "Movie not found.", 404
+
+        new_movie = Movie(
+            name=movie_info["Title"],
+            director=movie_info["Director"],
+            year=movie_info["Year"],
+            poster_url=movie_info["Poster"],
+            user_id=user_id,
+        )
+        data_manager.add_movie(new_movie)
+        return redirect(url_for("get_movies", user_id=user_id)), 303
+
+    except Exception:
+        return "Unexpected error while adding movie.", 500
 
 
 @app.route("/users/<int:user_id>/movies/<int:movie_id>/update", methods=["POST"])
 def update_movie(user_id, movie_id):
     """Modify the title of a specific movie in a user’s list, without depending on OMDb for corrections."""
-    new_title = request.form.get("title")
-    data_manager.update_movie(movie_id=movie_id, new_title=new_title)
-    return redirect(url_for("get_movies", user_id=user_id)), 303
+    new_title = request.form.get("title").strip()
+
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return "User not found.", 404
+        movie = Movie.query.get(movie_id)
+        if not movie:
+            return "Movie not found.", 404
+        data_manager.update_movie(movie_id=movie_id, new_title=new_title)
+        return redirect(url_for("get_movies", user_id=user_id)), 303
+    except Exception:
+        return "Unexpected error while updating movie.", 500
 
 
 @app.route("/users/<int:user_id>/movies/<int:movie_id>/delete", methods=["POST"])
 def delete_movie(user_id, movie_id):
     """Remove a specific movie from a user’s favorite movie list."""
-    data_manager.delete_movie(movie_id)
-    return redirect(url_for("get_movies", user_id=user_id)), 303
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return "User not found.", 404
+        movie = Movie.query.get(movie_id)
+        if not movie:
+            return "Movie not found.", 404
+        
+        data_manager.delete_movie(movie_id)
+        return redirect(url_for("get_movies", user_id=user_id)), 303
+    except Exception:
+        return "Unexpected error while deleting movie.", 500
 
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    return render_template("404.html"), 404
 
 
 if __name__ == "__main__":
