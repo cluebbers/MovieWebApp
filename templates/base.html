@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<HTML lang="en">
+
+<HEAD>
+    <meta charset="UTF-8">
+    <title>Movie App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</HEAD>
+
+<BODY>
+    <nav>
+        <div class="container>
+            <a href="/" class="logo" logo>MovieApp</a>
+        </div>
+    </nav>
+    <main class="container">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Movie App. All rights reserved.</p>
+        </div>
+    </footer>
+</BODY>
+
+</HTML>

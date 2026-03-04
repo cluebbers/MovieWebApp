@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<a href="/" class="back-link">&larr; Back to Users</a>
+
+<h1>Movies for {{ user.name}}</h1>
+<ul class="card-list">
+    {% for movie in movies %}
+    <li class="card">
+        <img src="{{ movie.poster_url }}" alt="Poster for {{ movie.name }}" class="movie-poster">
+        <form action="/users/{{ user.id }}/movies/{{ movie.id }}/update" method="post" class="inline-form">
+            <input type="text" name="title" value="{{ movie.name }}" required>
+            <button type="submit" class="btn btn-small">Update</button>
+        </form>
+        <div><strong>Year:</strong> {{ movie.year }}</div>
+        <div><strong>Director:</strong> {{ movie.director }}</div>
+        <form action="/users/{{ user.id }}/movies/{{ movie.id}}/delete" method="post" class="inline-form">
+            <button type="submit" class="btn btn-danger btn-small"
+                onclick="return confirm('Delete this movie?');">Delete</button>
+        </form>
+
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="form-section">
+    <h2>Add New Movie</h2>
+    <form action="/users/{{ user.id }}/movies" method="post">
+        <input type="text" name="title" placeholder="Movie title" required>
+
+        <input type="text" name="year" placeholder="Year (optional)">
+
+        <button type="submit" class="btn">Add Movie</button>
+    </form>
+</div>
+{% endblock %}
