@@ -3,13 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True, auto_increment=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100), nullable=False)
     
     
 class Movie(db.Model):
   # Define all the Movie properties
-  id = db.Column(db.Integer, primary_key=True, auto_increment=True)
+  id = db.Column(db.Integer, primary_key=True, autoincrement=True)
   name = db.Column(db.String(100), nullable=False)
   director = db.Column(db.String(100), nullable=False)
   year = db.Column(db.String(20), nullable=False)
